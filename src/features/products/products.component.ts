@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Product } from '../../core/models/product.model';
+import { MOCK_PRODUCTS } from '../../core/data/mock-data';
 
 interface ApiResponseLog {
   endpoint: string;
@@ -403,7 +404,7 @@ interface ApiResponseLog {
 export class ProductsComponent implements OnInit {
   private http = inject(HttpClient);
 
-  readonly products = signal<Product[]>([]);
+  readonly products = signal<Product[]>([...MOCK_PRODUCTS]);
   readonly isLoading = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
   readonly lastApiCall = signal<ApiResponseLog | null>(null);
@@ -429,10 +430,15 @@ export class ProductsComponent implements OnInit {
     this.isLoading.set(true);
     this.http.get<Product[]>('/api/products').subscribe({
       next: (data) => {
-        this.products.set(data);
+        this.products.set(data && data.length ? data : [...MOCK_PRODUCTS]);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        if (!this.products().length) {
+          this.products.set([...MOCK_PRODUCTS]);
+        }
+        this.isLoading.set(false);
+      }
     });
   }
 

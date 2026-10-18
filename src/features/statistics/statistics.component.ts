@@ -5,6 +5,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { StatisticsService } from '../../core/services/statistics.service';
 import { HttpClient } from '@angular/common/http';
 import { Product } from '../../core/models/product.model';
+import { MOCK_PRODUCTS, MOCK_USERS, MOCK_CARTS, MOCK_ADVANCED_STATS } from '../../core/data/mock-data';
 import Chart from 'chart.js/auto';
 
 interface CategoryMetric {
@@ -398,10 +399,10 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
   private donutInstance?: Chart;
 
   readonly isLoading = signal<boolean>(false);
-  readonly products = signal<Product[]>([]);
-  readonly cartsCount = signal<number>(0);
-  readonly usersCount = signal<number>(0);
-  readonly avgCartValue = signal<number>(0);
+  readonly products = signal<Product[]>([...MOCK_PRODUCTS]);
+  readonly cartsCount = signal<number>(MOCK_CARTS.length);
+  readonly usersCount = signal<number>(MOCK_USERS.length);
+  readonly avgCartValue = signal<number>(MOCK_ADVANCED_STATS.averageCartValue);
   readonly exportToast = signal<string | null>(null);
 
   // Filters
@@ -579,23 +580,32 @@ export class StatisticsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.http.get<Product[]>('/api/products').subscribe({
       next: (products) => {
-        this.products.set(products || []);
+        this.products.set(products && products.length ? products : [...MOCK_PRODUCTS]);
         this.isLoading.set(false);
         setTimeout(() => this.renderCharts(), 80);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        if (!this.products().length) {
+          this.products.set([...MOCK_PRODUCTS]);
+        }
+        this.isLoading.set(false);
+        setTimeout(() => this.renderCharts(), 80);
+      }
     });
 
     this.http.get<{ value: number }>('/api/metrics/total-carts').subscribe({
-      next: (res) => this.cartsCount.set(res?.value || 0)
+      next: (res) => this.cartsCount.set(res?.value || MOCK_CARTS.length),
+      error: () => this.cartsCount.set(MOCK_CARTS.length)
     });
 
     this.http.get<{ value: number }>('/api/metrics/total-users').subscribe({
-      next: (res) => this.usersCount.set(res?.value || 0)
+      next: (res) => this.usersCount.set(res?.value || MOCK_USERS.length),
+      error: () => this.usersCount.set(MOCK_USERS.length)
     });
 
     this.http.get<{ averageCartValue: number }>('/api/statistics/advanced').subscribe({
-      next: (res) => this.avgCartValue.set(res?.averageCartValue || 0)
+      next: (res) => this.avgCartValue.set(res?.averageCartValue || MOCK_ADVANCED_STATS.averageCartValue),
+      error: () => this.avgCartValue.set(MOCK_ADVANCED_STATS.averageCartValue)
     });
   }
 

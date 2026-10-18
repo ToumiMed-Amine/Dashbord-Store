@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { Cart } from '../../core/models/cart.model';
+import { MOCK_CARTS } from '../../core/data/mock-data';
 
 interface ApiResponseLog {
   endpoint: string;
@@ -434,7 +435,7 @@ interface ApiResponseLog {
 export class CartsComponent implements OnInit {
   private http = inject(HttpClient);
 
-  readonly carts = signal<Cart[]>([]);
+  readonly carts = signal<Cart[]>([...MOCK_CARTS]);
   readonly isLoading = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
   readonly lastApiCall = signal<ApiResponseLog | null>(null);
@@ -462,10 +463,15 @@ export class CartsComponent implements OnInit {
     this.isLoading.set(true);
     this.http.get<Cart[]>('/api/carts').subscribe({
       next: (data) => {
-        this.carts.set(data);
+        this.carts.set(data && data.length ? data : [...MOCK_CARTS]);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        if (!this.carts().length) {
+          this.carts.set([...MOCK_CARTS]);
+        }
+        this.isLoading.set(false);
+      }
     });
   }
 

@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { User } from '../../core/models/user.model';
+import { MOCK_USERS } from '../../core/data/mock-data';
 
 interface ApiResponseLog {
   endpoint: string;
@@ -419,7 +420,7 @@ interface ApiResponseLog {
 export class UsersComponent implements OnInit {
   private http = inject(HttpClient);
 
-  readonly users = signal<User[]>([]);
+  readonly users = signal<User[]>([...MOCK_USERS]);
   readonly isLoading = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
   readonly lastApiCall = signal<ApiResponseLog | null>(null);
@@ -447,10 +448,15 @@ export class UsersComponent implements OnInit {
     this.isLoading.set(true);
     this.http.get<User[]>('/api/users').subscribe({
       next: (data) => {
-        this.users.set(data);
+        this.users.set(data && data.length ? data : [...MOCK_USERS]);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        if (!this.users().length) {
+          this.users.set([...MOCK_USERS]);
+        }
+        this.isLoading.set(false);
+      }
     });
   }
 

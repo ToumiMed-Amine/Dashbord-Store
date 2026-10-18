@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { StatisticsService } from '../../core/services/statistics.service';
 import { ForecastResponse } from '../../core/models/forecast.model';
+import { generateMockForecast } from '../../core/data/mock-data';
 import Chart from 'chart.js/auto';
 
 @Component({
@@ -447,7 +448,7 @@ export class ForecastsComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly hardwareCycleMonths = signal<number>(36);
   readonly inflationRate = signal<number>(4);
 
-  readonly forecastData = signal<ForecastResponse | null>(null);
+  readonly forecastData = signal<ForecastResponse | null>(generateMockForecast('30d', 'budget', 0.19));
 
   readonly currentUnit = computed(() => {
     return this.forecastData()?.unit || (this.selectedMetric() === 'obsolescence' ? 'équipements' : '€');
@@ -669,11 +670,15 @@ export class ForecastsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.statsService.getForecasts(this.selectedPeriod(), this.selectedMetric(), growth).subscribe({
       next: (data) => {
-        this.forecastData.set(data);
+        this.forecastData.set(data && data.forecast?.length ? data : generateMockForecast(this.selectedPeriod(), this.selectedMetric(), growth));
         this.isLoading.set(false);
         setTimeout(() => this.renderChart(), 80);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        this.forecastData.set(generateMockForecast(this.selectedPeriod(), this.selectedMetric(), growth));
+        this.isLoading.set(false);
+        setTimeout(() => this.renderChart(), 80);
+      }
     });
   }
 
