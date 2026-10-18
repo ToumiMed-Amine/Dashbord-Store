@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@media (min-width: 1024px) {
+  aside.lg\:translate-x-0 {
+    transform: translateX(0) !important;
+  }
+}

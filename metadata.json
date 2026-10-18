@@ -1,0 +1,6 @@
+{
+  "name": "Fake Store Analytics",
+  "description": "Plateforme professionnelle d'analyse de données et Business Intelligence basée sur Fake Store API avec Angular.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
